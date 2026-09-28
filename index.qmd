@@ -1,0 +1,461 @@
+---
+title: "**ANÁLISE DE DADOS**"
+subtitle: "**Dificuldade financeira associada a mudanças nos hábitos alimentares durante a pandemia de COVID-19**"
+author: "Nayara da Cunha Nunes <br> (<nayaracn@id.uff.br>)"
+date: today
+date-format: "DD/MM/YYYY"
+institute: "Universidade Federal Fluminense"
+format:
+  revealjs:
+    output-dir: docs
+    css: custom.css
+    slide-number: true
+    incremental: false
+    transition: zoom
+    background-transition: convex
+    width: 1280
+    height: 720
+    margin: 0.07
+    auto-stretch: false
+    title-slide-attributes:
+      
+      data-background-size: cover
+---
+
+```{r}
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+library(knitr)
+
+dados <- read_excel("DadosNutri.xlsx")
+```
+
+```{r}
+grafico_abs <- ggplot(
+  data = dados,
+  mapping = aes(
+    x = Dificuldade_Financeira,
+    fill = Alteracao_Pandemia
+  )
+) +
+  geom_bar(
+    position = position_dodge()
+  ) +
+  geom_text(
+    stat = "count",
+    aes(label = after_stat(count)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.5,
+    size = 5
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.12))
+  ) +
+  scale_fill_brewer(
+    palette = "Dark2",
+    name = "Alteração alimentar"
+  ) +
+  xlab("Dificuldade financeira") +
+  ylab("Frequência absoluta") +
+  ggtitle(" ") +
+  theme_minimal(base_size = 15) +
+  theme(
+    plot.title = element_text(
+      margin = margin(b = 15)
+    )
+  )
+```
+
+```{r}
+alteracao_grafico <- dados %>%
+  count(Dificuldade_Financeira, Alteracao_Pandemia) %>%
+  group_by(Dificuldade_Financeira) %>%
+  mutate(
+    percentual = n / sum(n)
+  ) %>%
+  ungroup()
+```
+
+```{r}
+grafico_pct <- ggplot(
+  data = alteracao_grafico,
+  mapping = aes(
+    x = Dificuldade_Financeira,
+    y = percentual,
+    fill = Alteracao_Pandemia
+  )
+) +
+  geom_col(
+    position = position_dodge(width = 0.9)
+  ) +
+  geom_text(
+    aes(
+      label = scales::percent(percentual, accuracy = 0.1)
+    ),
+    position = position_dodge(width = 0.9),
+    vjust = -0.5,
+    size = 5
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    limits = c(0, 1)
+  ) +
+  scale_fill_brewer(
+    palette = "Dark2",
+    name = "Alteração alimentar"
+  ) +
+  xlab("Dificuldade financeira") +
+  ylab("Percentual de participantes") +
+  ggtitle(" ") +
+  theme_minimal(base_size = 15) +
+  theme(
+    plot.title = element_text(
+      margin = margin(b = 15)
+    )
+  )
+```
+
+```{r}
+#### bibliotecas
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+
+### agrupando as tres variáveis alimentares
+habitos_grafico <- dados %>%
+  select(
+    Dificuldade_Financeira,
+    Frutas,
+    Doces,
+    Produtos_Industrializados
+  ) %>%
+  
+  pivot_longer(
+    cols = c(Frutas, Doces, Produtos_Industrializados),
+    names_to = "Alimento",
+    values_to = "Mudanca"
+  ) %>%
+  
+  count(
+    Dificuldade_Financeira,
+    Alimento,
+    Mudanca
+  ) %>%
+  
+  group_by(
+    Dificuldade_Financeira,
+    Alimento
+  ) %>%
+  
+  mutate(
+    percentual = n / sum(n)
+  ) %>%
+  
+  ungroup()
+
+
+habitos_grafico <- habitos_grafico %>%
+  mutate(
+    Alimento = recode(
+      Alimento,
+      "Frutas" = "Frutas",
+      "Doces" = "Doces",
+      "Produtos_Industrializados" = "Produtos industrializados"
+    )
+  )
+
+N <- habitos_grafico |>
+  dplyr::count(Alimento, Dificuldade_Financeira)
+  
+habitos_grafico <- ggplot(
+  habitos_grafico,
+  aes(
+    x = Dificuldade_Financeira,
+    y = percentual,
+    fill = Mudanca
+  )
+) +
+  
+  geom_col() +
+  
+  geom_text(
+    aes(
+      label = ifelse(
+        percentual < 0.05,
+        "",
+        percent(percentual, accuracy = 0.1)
+      )
+    ),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  geom_text(
+    data = N,
+    aes(x = Dificuldade_Financeira, y = 1.02, label = paste0("n = ", n)),
+    inherit.aes = FALSE
+  ) +
+  facet_wrap(~ Alimento) +
+  
+  scale_y_continuous(
+    labels = percent,
+    limits = c(0, 1)
+  ) +
+  
+  labs(
+    title = "Mudanças nos hábitos alimentares segundo dificuldade financeira",
+    x = "Dificuldade financeira",
+    y = "Proporção relativa (%)",
+    fill = "Mudança no consumo"
+  ) +
+  
+  theme_minimal()
+```
+
+------------------------------------------------------------------------
+
+## **Roteiro da análise**
+
+::: box-green
+1.  **Pergunta de pesquisa e objetivo**
+2.  **Dados e variáveis**
+3.  **Caracterização da amostra**
+4.  **Dificuldade financeira e alteração alimentar**
+5.  **Existe associação?**
+6.  **Mudanças nos hábitos alimentares**
+7.  **Conclusões**
+8.  **Ferramentas utilizadas**
+:::
+
+## **Pergunta de pesquisa e objetivo**
+
+A partir de dados coletados por alunas da pós-graduação em Nutrição da UFF, por meio de questionário online sobre hábitos alimentares durante a pandemia de COVID-19, respondido por 2.359 pessoas em 2022, segue a seguinte pergunta de pesquisa:
+
+> **Existe associação entre dificuldade financeira e mudanças nos hábitos alimentares durante a pandemia de COVID-19?**
+
+### Objetivo
+
+Investigar a associação entre **dificuldade financeira** e **mudanças nos hábitos alimentares** durante a pandemia de COVID-19, considerando:
+
+- a ocorrência de alteração alimentar;
+- mudanças em hábitos alimentares específicos.
+
+## **Dados e variáveis**
+
+> Base: **2.359 participantes**     \|     **29 variáveis**
+
+```{r}
+tabela_variaveis <- tibble(
+  Variável = c(
+    "Dificuldade financeira",
+    "Alteração na pandemia",
+    "Frutas",
+    "Doces",
+    "Produtos industrializados",
+    "Idade",
+    "IMC",
+    "Gênero"
+  ),
+  
+  `Função na análise` = c(
+    "Explicativa / comparação",
+    "Resposta principal",
+    "Aprofundamento dos hábitos",
+    "Aprofundamento dos hábitos",
+    "Aprofundamento dos hábitos",
+    "Caracterização da amostra",
+    "Caracterização da amostra",
+    "Caracterização da amostra"
+  ),
+  
+  Tipo = c(
+    "Qualitativa",
+    "Qualitativa",
+    "Qualitativa",
+    "Qualitativa",
+    "Qualitativa",
+    "Quantitativa",
+    "Quantitativa",
+    "Qualitativa"
+  )
+)
+
+knitr::kable(
+  tabela_variaveis,
+  align = c("l", "l", "l"),
+  col.names = c(
+    "Variável",
+    "Função na análise",
+    "Tipo"
+  )
+)
+
+```
+
+## **Caracterização da amostra**
+
+```{r}
+library(knitr)
+resumo_numerico <- dados %>%
+  summarise(
+    Idade = sprintf(
+      "%.1f ± %.1f anos",
+      mean(Idade, na.rm = TRUE),
+      sd(Idade, na.rm = TRUE)
+    ),
+    IMC = sprintf(
+      "%.1f ± %.2f kg/m²",
+      mean(IMC, na.rm = TRUE),
+      sd(IMC, na.rm = TRUE)
+    )
+  )
+
+feminino <- dados %>%
+  summarise(
+    n = sum(Genero == "Feminino"),
+    perc = mean(Genero == "Feminino") * 100
+  )
+
+dificuldade <- dados %>%
+  summarise(
+    n = sum(Dificuldade_Financeira == "Sim"),
+    perc = mean(Dificuldade_Financeira == "Sim") * 100
+  )
+
+tabela_caracterizacao <- tibble(
+  Característica = c(
+    "Participantes",
+    "Idade",
+    "IMC",
+    "Gênero feminino",
+    "Dificuldade financeira"
+  ),
+  
+  Resultado = c(
+    format(nrow(dados), big.mark = "."),
+    resumo_numerico$Idade,
+    resumo_numerico$IMC,
+    sprintf(
+      "%d (%.1f%%)",
+      feminino$n,
+      feminino$perc
+    ),
+    sprintf(
+      "%d (%.1f%%)",
+      dificuldade$n,
+      dificuldade$perc
+    )
+  )
+)
+
+kable(
+  tabela_caracterizacao,
+  col.names = c("Característica", "Resultado"),
+  align = c("l", "c")
+)
+```
+
+------------------------------------------------------------------------
+
+## **Dificuldade financeira e alteração alimentar**
+
+::::: columns
+::: {.column width="50%"}
+```{r}
+grafico_abs
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+grafico_pct
+```
+:::
+:::::
+
+O grupo sem dificuldade financeira apresenta 1.923 pessoas, contra 436 no grupo que relatou dificuldade financeira.
+
+A alteração alimentar foi mais frequente entre participantes com dificuldade financeira: 86,0% contra 70,7% entre aqueles sem dificuldade — diferença de 15,3 pontos percentuais.
+
+> Existe evidência estatística de associação entre as duas variáveis?
+
+## **Existe associação?**
+
+```{r}
+#| echo: false
+
+teste_chi <- chisq.test(
+  table(
+    dados$Dificuldade_Financeira,
+    dados$Alteracao_Pandemia
+  )
+)
+```
+
+### **Teste qui-quadrado de independência**
+
+O teste avalia:
+
+**H₀:** dificuldade financeira e alteração alimentar são independentes.
+
+**H₁:** existe associação entre dificuldade financeira e alteração alimentar.
+
+```{r}
+#| echo: false
+#| results: asis
+
+cat(
+  "### Resultado\n\n",
+  "$\\chi^2$ = ", 
+  round(unname(teste_chi$statistic), 2),
+  " &nbsp;&nbsp; | &nbsp;&nbsp; ",
+  "gl = ", unname(teste_chi$parameter),
+  " &nbsp;&nbsp; | &nbsp;&nbsp; ",
+  "***p* < 0,001**",
+  sep = ""
+)
+```
+
+> **Interpretação:** há evidência estatística de associação entre dificuldade financeira e alteração alimentar durante a pandemia.Porém, esse resultado indica associação, mas não permite afirmar que a dificuldade financeira causou as mudanças alimentares.
+
+## **Mudanças nos hábitos alimentares**
+
+Foram selecionados três hábitos que representam diferentes aspectos do consumo alimentar: Frutas, Doces e Produtos industrializados.
+
+```{r}
+habitos_grafico
+```
+
+Os padrões de mudança diferiram entre os grupos e também entre os tipos de alimentos.
+
+## **Conclusão**
+
+- A alteração alimentar foi mais frequente entre participantes com **dificuldade financeira**: **86,0% vs. 70,7%**.
+
+- Houve **evidência estatística de associação** entre dificuldade financeira e alteração alimentar (*p* \< 0,001).
+
+- Nos hábitos específicos, foram observados **diferentes padrões de aumento e redução** no consumo de frutas, doces e produtos industrializados.
+
+### Limitações
+
+- Os resultados indicam **associação, não causalidade**.
+- Frutas, doces e produtos industrializados representam apenas **parte dos hábitos alimentares** disponíveis na base.
+- Os grupos possuem **tamanhos diferentes** (1.923 sem dificuldade e 436 com dificuldade), por isso as comparações foram realizadas principalmente por proporções.
+
+## **Ferramentas utilizadas**
+
+A análise foi desenvolvida em **R**, utilizando **Quarto** para construção da apresentação.
+
+| Pacote      | Utilização                                    |
+|:------------|:----------------------------------------------|
+| **readxl**  | Importação da base de dados em Excel          |
+| **dplyr**   | Manipulação, transformação e resumo dos dados |
+| **tidyr**   | Organização e reestruturação dos dados        |
+| **ggplot2** | Construção dos gráficos                       |
+| **scales**  | Formatação de percentuais nos gráficos        |
+| **knitr**   | Geração das tabelas na apresentação           |
+
+**Apresentação:** Quarto + RevealJS
