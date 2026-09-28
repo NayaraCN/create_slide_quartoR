@@ -54,8 +54,11 @@ grafico_abs <- ggplot(
   scale_y_continuous(
     expand = expansion(mult = c(0, 0.12))
   ) +
-  scale_fill_brewer(
-    palette = "Dark2",
+    scale_fill_manual(
+    values = c(
+    "Não" = "#F8766D",
+    "Sim" = "#00BFC4"
+    ),
     name = "Alteração alimentar"
   ) +
   xlab("Dificuldade financeira") +
@@ -103,8 +106,11 @@ grafico_pct <- ggplot(
     labels = scales::percent_format(),
     limits = c(0, 1)
   ) +
-  scale_fill_brewer(
-    palette = "Dark2",
+    scale_fill_manual(
+    values = c(
+    "Não" = "#F8766D",
+    "Sim" = "#00BFC4"
+    ),
     name = "Alteração alimentar"
   ) +
   xlab("Dificuldade financeira") +
@@ -459,3 +465,4 @@ A análise foi desenvolvida em **R**, utilizando **Quarto** para construção da
 | **knitr**   | Geração das tabelas na apresentação           |
 
 **Apresentação:** Quarto + RevealJS
+**Puclicação/Web** GitHub Pages | Publicação da apresentação na web |
